@@ -189,15 +189,23 @@ list_tickets_func = generative_models.FunctionDeclaration(
 
 async def insert_ticket(client: aiohttp.ClientSession, params: str):
     ticket_info = json.loads(params)
+    required_params = {
+        "airline": ticket_info.get("airline"),
+        "flight_number": ticket_info.get("flight_number"),
+        "departure_airport": ticket_info.get("departure_airport"),
+        "arrival_airport": ticket_info.get("arrival_airport"),
+        "departure_time": ticket_info.get("departure_time").replace("T", " "),
+        "arrival_time": ticket_info.get("arrival_time").replace("T", " "),
+    }
+    optional_params = {
+        "seat_row": ticket_info.get("seat_row", None),
+        "seat_letter": ticket_info.get("seat_letter", None),
+    }
     response = await client.post(
         url=f"{BASE_URL}/tickets/insert",
         params={
-            "airline": ticket_info.get("airline"),
-            "flight_number": ticket_info.get("flight_number"),
-            "departure_airport": ticket_info.get("departure_airport"),
-            "arrival_airport": ticket_info.get("arrival_airport"),
-            "departure_time": ticket_info.get("departure_time").replace("T", " "),
-            "arrival_time": ticket_info.get("arrival_time").replace("T", " "),
+            **required_params,
+            **{k: v for k, v in optional_params.items() if v is not None},
         },
         headers=get_headers(client),
     )
